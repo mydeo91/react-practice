@@ -1,20 +1,79 @@
+// 노트 리듀서 영역입니다.
+
+// 노트 생성 구현을 위한 import
+import { ajax } from 'rxjs/observable/dom/ajax';
+import { of } from 'rxjs';
+import { map, mergeMap, catchError, withLatestFrom } from 'rxjs/operators';
+import { ofType } from 'redux-observable';
+
+// 노트 생성 관련 variable 정의
+const ADD_NOTE = 'notes/ADD_NOTE';
+const ADD_NOTE_SUCCESS = 'notes/ADD_NOTE_SUCCESS';
+const ADD_NOTE_FAILURE = 'notes/ADD_NOTE_FAILURE';
+
+// redux-store 관련 variable 정의
 const CHANGE_NOTE_INPUT = "notes/CHANGE_NOTE_INPUT";
 
-// action
+// ==== Action ====
+
+// ==== Create action ====
 export const changeNoteInput = ({ value }) => ({
   type: CHANGE_NOTE_INPUT,
   payload: { value }
 });
 
-// Initial State
-const initialState = {
-  noteInput: ""
+export const addNote = () => ({
+  type: ADD_NOTE
+});
+
+export const addNoteSuccess = note => ({
+  type: ADD_NOTE_SUCCESS,
+  payload: {
+    note
+  }
+});
+
+export const addNoteFailure = error => ({
+  type: ADD_NOTE_FAILURE,
+  payload: {
+    error
+  }
+});
+
+// 노트 생성 action 정의
+const addNoteEpic = (action$, state$) => {
+  return action$.pipe(
+    ofType(ADD_NOTE),
+    withLatestFrom(state$),
+    mergeMap(([action, state]) => {
+      return ajax.post(`/api/notes/`, { text: state.notes.noteInput }).pipe(
+        map(response => {
+          const note = response.response;
+          return addNoteSuccess(note);
+        }),
+        catchError(error =>
+          of({
+            type: ADD_NOTE_FAILURE,
+            payload: error,
+            error: true
+          })
+        )
+      );
+    })
+  );
 };
 
-// Define Reducer & Export Reducer
+
+// ==== Initial State ====
+const initialState = {
+  noteInput: "",
+  notes:[]
+};
+
+// ==== Define Reducer & Export Reducer ====
 export const notes = (state = initialState, action) => {
   switch (action.type) {
-    // 변화가 있으면 noteInput를 업데이트
+    // Updates note
     case CHANGE_NOTE_INPUT:
       // Test Using localStorage func! Awesome!
       localStorage.setItem('noteInput',action.payload.value);
@@ -22,8 +81,32 @@ export const notes = (state = initialState, action) => {
           ...state,
           noteInput: action.payload.value
       };
-    // 기본적으로는 상태 유지
+    // When note created success
+    case ADD_NOTE_SUCCESS:
+      const{ note } = action.payload;
+      return {
+        ...state,
+        notes: [note].concat(state.notes),  // 기존 노트에 추가
+        noteInput: '', // 노트 입력상태 초기화
+        massage: '[SUCCESS] Note 생성이 정상적으로 처리되었습니다.'
+      }
+
+    // When note created failed
+    case ADD_NOTE_FAILURE:
+      return {
+        ...state,
+        error: {
+          triggered: true,
+          message: '[ERROR] Note 생성에 실패했습니다.'  // 에러 메세지 출력
+        }
+      };
     default:
       return state;
   }
+};
+
+// Export reducer
+// export addNoteEpic reducer 
+export const notesEpics = {
+  addNoteEpic
 };

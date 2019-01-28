@@ -11,17 +11,20 @@ import styles from "./InsertForm.module.scss";
 //   );
 // };
 
-// Component
-const InsertForm = ({ noteInput, onChangeInput }) => {
+// Component --> Handler 추가 : addNote
+const InsertForm = ({ noteInput, onChangeInput, onAdd }) => {
 
   // event 발생 시 작동
   const handleChange = event => {
     const { value } = event.target;
-    console.log('We will updating value: ', {value})
-    
-    console.log('InsertForm.handleChange : State Updating ...');
     // 실질적으로 state를 update하는 부분
     onChangeInput({value})
+  }
+
+  const handleKeyPress = event => {
+    if (event.key === 'Enter') {
+      onAdd();
+    }
   }
 
   return (
@@ -33,6 +36,7 @@ const InsertForm = ({ noteInput, onChangeInput }) => {
           // 변경된 값은 onChange 함수를 통해서 Update 된다.
           value={noteInput}
           onChange={handleChange}
+          onKeyPress={handleKeyPress}
       />
     </div>
   );
