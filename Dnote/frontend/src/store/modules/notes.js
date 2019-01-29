@@ -30,6 +30,12 @@ const GET_NOTES_FAILURE = 'notes/GET_NOTES_FAILURE';
 const UPDATE_NOTE = 'note/UPDATE_NOTE';
 const UPDATE_NOTE_SUCCESS = 'note/UPDATE_NOTE_SUCCESS';
 const UPDATE_NOTE_FAILURE = 'note/UPDATE_NOTE_FAILURE';
+
+
+// 노트 삭제
+const DELETE_NOTE = 'note/DELETE_NOTE';
+const DELETE_NOTE_SUCCESS = 'note/DELETE_NOTE_SUCCESS';
+const DELETE_NOTE_FAILURE = 'note/DELETE_NOTE_FAILURE';
 // ========== ///Define Actions ==========
 
 
@@ -182,6 +188,56 @@ const updateNoteEpic = (action$, state$) => {
     })
   );
 };
+
+// 노트 삭제
+export const deleteNote = ({ id }) => ({
+  type: DELETE_NOTE,
+  payload: {
+    id
+  }
+});
+export const deleteNoteSuccess = ({ id }) => ({
+  type: DELETE_NOTE_SUCCESS,
+  payload: {
+    id
+  }
+});
+export const deleteNoteFailure = error => ({
+  type: DELETE_NOTE_FAILURE,
+  payload: {
+    error
+  }
+});
+
+// 노트 삭제 - EPIC 함수 정의
+const deleteNoteEpic = (action$, state$) => {
+  return action$.pipe(
+    ofType(DELETE_NOTE),
+    withLatestFrom(state$),
+    mergeMap(([action, state]) => {
+      const token = localStorage.getItem("userInfo")
+        ? JSON.parse(localStorage.getItem("userInfo")).token
+        : null;
+      return ajax
+        .delete(`/api/notes/${action.payload.id}/`, {
+          "Content-Type": "application/json",
+          Authorization: `token ${token}`
+        })
+        .pipe(
+          map(response => {
+            return deleteNoteSuccess({ id: action.payload.id });
+          }),
+          catchError(error =>
+            of({
+              type: DELETE_NOTE_FAILURE,
+              payload: error,
+              error: true
+            })
+          )
+        );
+    })
+  );
+};
 // ========== ///Create action ============
 
 // ========== Initial State ==========
@@ -297,15 +353,21 @@ export const notes = (state = initialState, action) => {
       };
 
     case UPDATE_NOTE_FAILURE:
-    return {
-      ...state,
-      error: {
-        triggered: true,
-        message: '[ERROR] 노트 업데이트에 실패했습니다.'
-      }
-    };
+      return {
+        ...state,
+        error: {
+          triggered: true,
+          message: '[ERROR] 노트 업데이트에 실패했습니다.'
+        }
+      };
 
-    
+    // 노트 삭제
+    case DELETE_NOTE_SUCCESS:
+      return {
+        ...state,
+        notes: state.notes.filter(note => note.id !== action.payload.id)
+      };
+
     // 기본 리듀서 --> 저장 중인 state 반환
     default:
       return state;
@@ -318,7 +380,8 @@ export const notes = (state = initialState, action) => {
 export const notesEpics = {
   addNoteEpic,
   getNotesEpic,
-  updateNoteEpic
+  updateNoteEpic,
+  deleteNoteEpic
 };
 // ========== ///Export Reducer ==========
 

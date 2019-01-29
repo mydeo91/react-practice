@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './NoteItem.module.scss';
 
 
-const NoteItem = ({ note, editing, onToggle, onChange, onUpdate }) => {
+const NoteItem = ({ note, editing, onToggle, onChange, onUpdate, onDelete }) => {
     
     const handleToggle = () => {
         onToggle({ id: note.id, text: note.text });
@@ -19,6 +19,12 @@ const NoteItem = ({ note, editing, onToggle, onChange, onUpdate }) => {
             onUpdate();
         }
     };
+
+    const handleDelete = e => {
+        // handleToggle이 되는것을 방지
+        e.stopPropagation();
+        onDelete({ id: note.id });
+      };
 
     return (
         <div 
@@ -39,7 +45,9 @@ const NoteItem = ({ note, editing, onToggle, onChange, onUpdate }) => {
                     <div className={styles.note}>{note.text}</div>
                 )
             }
-            <div className={styles.delete}>&times;</div>
+            <div className={styles.delete} onClick={handleDelete}>
+                &times;
+            </div>
         </div>
     );
 };

@@ -53,12 +53,18 @@ export class NoteContainer extends Component {
     const { updateNote } = this.props;
     updateNote();
   };
+
+  // DELETE
+  deleteNote = ({ id }) => {
+    const { deleteNote } = this.props;
+    deleteNote({ id });
+  };
   // =========== ///Event Handeling ===========
 
   // ======== RENDERING =========
   render() {
     const { noteInput, error, notes, editing } = this.props;
-    const { handleChange, addNote, handleToggle, updateNote } = this;
+    const { handleChange, addNote, handleToggle, updateNote, deleteNote } = this;
     return (
       <div>
         <NoteWrapper>
@@ -76,6 +82,7 @@ export class NoteContainer extends Component {
             // NoteList props에 onChange 추가
             onChange={handleChange}
             onUpdate={updateNote}
+            onDelete={deleteNote}
           />
         </NoteWrapper>
       </div>
@@ -113,6 +120,10 @@ const mapDispatchToProps = dispatch => {
     // UPDATE
     updateNote: () => {
       dispatch(noteActions.updateNote());
+    },
+    // DELETE
+    deleteNote: ({ id }) => {
+      dispatch(noteActions.deleteNote({ id }));
     }
   };
 };
