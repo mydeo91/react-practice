@@ -4,10 +4,16 @@ import NoteItem from 'components/notes/NoteItem/NoteItem';
 
 
 // NoteList 객체 정의
-const NoteList = ({ notes }) => {
+const NoteList = ({ notes, editing, onToggle, onChange }) => {
     // noteList 객체 정의
     const noteList = notes.map((note, i) => {
-        return <NoteItem note={note} key={note.id} />;
+        return <NoteItem 
+                    note={note} 
+                    key={note.id} 
+                    editing={editing}
+                    onToggle={onToggle}
+                    onChange={onChange}
+                />;
     });
 
     // noteList 객체 랜더링

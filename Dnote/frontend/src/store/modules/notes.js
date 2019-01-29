@@ -6,29 +6,37 @@ import { of } from 'rxjs';
 import { map, mergeMap, catchError, withLatestFrom } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 
-// 노트 생성 관련 variable 정의
+// ========== Define Actions ==========
+// redux-store 관련 variable 정의
+const CHANGE_NOTE_INPUT = "notes/CHANGE_NOTE_INPUT";
+
+
+// 노트 생성
 const ADD_NOTE = 'notes/ADD_NOTE';
 const ADD_NOTE_SUCCESS = 'notes/ADD_NOTE_SUCCESS';
 const ADD_NOTE_FAILURE = 'notes/ADD_NOTE_FAILURE';
 
 
-// GET 액션 추가
+// GET_NOTES 리스트
 const GET_NOTES = 'notes/GET_NOTES';
 const GET_NOTES_SUCCESS = 'notes/GET_NOTES_SUCCESS';
 const GET_NOTES_FAILURE = 'notes/GET_NOTES_FAILURE';
 
 
-// redux-store 관련 variable 정의
-const CHANGE_NOTE_INPUT = "notes/CHANGE_NOTE_INPUT";
+// 노트 수정
+const TOGGLE_NOTE = 'notes/TOGGLE_NOTE';
+// ========== ///Define Actions ==========
 
-// ==== Action ====
 
-// ==== Create action ====
-export const changeNoteInput = ({ value }) => ({
+
+// ========== Create action ============
+// 노트 입력 값 변경 관련 + 수정 시(isEditing)
+export const changeNoteInput = ({ value }, isEditing) => ({
   type: CHANGE_NOTE_INPUT,
-  payload: { value }
+  payload: { value, isEditing }
 });
 
+// 노트값 추가 관련
 export const addNote = () => ({
   type: ADD_NOTE
 });
@@ -47,7 +55,7 @@ export const addNoteFailure = error => ({
   }
 });
 
-// 노트 생성 action 정의
+// 노트 생성 함수 정의
 const addNoteEpic = (action$, state$) => {
   return action$.pipe(
     ofType(ADD_NOTE),
@@ -71,7 +79,7 @@ const addNoteEpic = (action$, state$) => {
 };
 
 
-// GET action
+// GET action 관련
 export const getNotes = () => ({
   type: GET_NOTES
 });
@@ -88,7 +96,7 @@ export const getNotesFailure = error => ({
   }
 });
 
-// API에 쓰일 EPIC 설정
+// API에 쓰일 EPIC 함수 정의
 const getNotesEpic = (actions$, states$) => {
   return actions$.pipe(
     ofType(GET_NOTES),
@@ -113,7 +121,17 @@ const getNotesEpic = (actions$, states$) => {
   );
 };
 
-// ==== Initial State ====
+// toggleNote 관련
+export const toggleNote = ({ id, text }) => ({
+  type: TOGGLE_NOTE,
+  payload: {
+    id,
+    text
+  }
+});
+// ========== ///Create action ============
+
+// ========== Initial State ==========
 const initialState = {
   noteInput: "",
   notes:[],
@@ -121,21 +139,38 @@ const initialState = {
   error: {
     triggered: false,
     message: ""
+  },
+  editing: {
+    id: null,
+    text: ""
   }
 };
+// ========== ///Initial State ==========
 
-// ==== Define Reducer & Export Reducer ====
+
+// ========== Define Reducer & Export Reducer ==========
 export const notes = (state = initialState, action) => {
   switch (action.type) {
-    // Updates note
+    
+    // 노트 입력값 변경
     case CHANGE_NOTE_INPUT:
       // Test Using localStorage func! Awesome!
-      // localStorage.setItem('noteInput',action.payload.value);
+        // localStorage.setItem('noteInput',action.payload.value);
+      if(action.payload.isEditing) {
+        return {
+          ...state,
+          editing: {
+            ...state.editing,
+            text: action.payload.value
+          }
+        }
+      }
       return {
           ...state,
           noteInput: action.payload.value
       };
-    // When note created success
+
+    // 노트 생성 성공
     case ADD_NOTE_SUCCESS:
       const{ note } = action.payload;
       return {
@@ -150,7 +185,7 @@ export const notes = (state = initialState, action) => {
         }
       }
 
-    // When note created failed
+    // 노트 생성 실패
     case ADD_NOTE_FAILURE:
       return {
         ...state,
@@ -159,13 +194,15 @@ export const notes = (state = initialState, action) => {
           message: '[ERROR] Note 생성에 실패했습니다.'  // 에러 메세지 출력
         }
       };
-    // GET_NOTES 관련========>
+
+    // GET_NOTES 성공
     case GET_NOTES_SUCCESS:
       return {
         ...state,
         notes: action.payload.notes
       };
 
+    // GET_NOTES 실패
     case GET_NOTES_FAILURE:
       return {
         ...state,
@@ -174,19 +211,32 @@ export const notes = (state = initialState, action) => {
           message: '[ERROR] 다시 시도해주세요.'
         }
       };
-    // ========>GET_NOTES 관련
 
+    // TOGGLE
+    case TOGGLE_NOTE:
+      return {
+        ...state,
+        editing: {
+          id: parseInt(action.payload.id, 10),
+          text: action.payload.text
+        }
+      };  
+
+    // 기본 리듀서 --> 저장 중인 state 반환
     default:
       return state;
   }
 };
+// ========== ///Define Reducer ==========
 
-// Export reducer
-// export addNoteEpic reducer 
+
+// ========== Export Reducer ==========
 export const notesEpics = {
   addNoteEpic,
   getNotesEpic
 };
+// ========== ///Export Reducer ==========
+
 
 
 // 마지막으로, reducer를 손보고 epic에 추가 해준다.
