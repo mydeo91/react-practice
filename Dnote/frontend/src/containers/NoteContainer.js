@@ -21,8 +21,19 @@ export class NoteContainer extends Component {
     addNote();
   }
 
+  // GET_NOTES 를 위한 UI 랜더링 작업 ===>
+  // React.ComponentLifeCycle.componentDidMount
+  componentDidMount() {
+    this.getNotes();
+  }
+
+  getNotes = () => {
+    const { getNotes } = this.props;
+    getNotes();
+  }
+
   render() {
-    const { noteInput } = this.props;
+    const { noteInput, error } = this.props;
     const { handleChange, addNote } = this;
     return (
       <div>
@@ -31,6 +42,7 @@ export class NoteContainer extends Component {
             noteInput={noteInput} 
             onChangeInput={handleChange}
             onAdd={addNote}
+            error={error}
           />
         </NoteWrapper>
       </div>
@@ -40,17 +52,24 @@ export class NoteContainer extends Component {
 
 const mapStateToProps = state => ({
   noteInput: state.notes.noteInput,
-  notes: state.notes.notes
+  notes: state.notes.notes,
+  error: state.notes.error
 });
+
 
 const mapDispatchToProps = dispatch => {
   return {
+    // CHANGE_NOTE_INPUT 추가
     changeNoteInput: ({ value }) => {
         dispatch(noteActions.changeNoteInput({ value }));
     },
-    // addNote EveneHandler 추가에 따른 dispatcher 업데이트
+    // ADD_NOTES 추가
     addNote: () => {
       dispatch(noteActions.addNote())
+    },
+    // GET_NOTES 추가
+    getNotes: () => {
+      dispatch(noteActions.getNotes())
     }
   };
 };

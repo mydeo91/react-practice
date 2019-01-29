@@ -11,7 +11,7 @@ import styles from "./InsertForm.module.scss";
 //   );
 // };
 
-// Component --> Handler 추가 : addNote
+// Component --> Handler 추가 : addNote  --> error 추가
 const InsertForm = ({ noteInput, onChangeInput, onAdd }) => {
 
   // event 발생 시 작동
@@ -22,6 +22,7 @@ const InsertForm = ({ noteInput, onChangeInput, onAdd }) => {
   }
 
   const handleKeyPress = event => {
+    // Enter 키 press시 onAdd() 실행
     if (event.key === 'Enter') {
       onAdd();
     }
