@@ -7,4 +7,8 @@ export const rootReducers = combineReducers({ notes });
 
 // 노트 생성 reducer 반영
 // --> Epic 사용을 위해선 store/configure.js 에 반영 필요
-export const rootEpics = combineEpics(notesEpics.addNoteEpic, notesEpics.getNotesEpic);
+export const rootEpics = combineEpics(
+    notesEpics.addNoteEpic, 
+    notesEpics.getNotesEpic,
+    notesEpics.updateNoteEpic
+);

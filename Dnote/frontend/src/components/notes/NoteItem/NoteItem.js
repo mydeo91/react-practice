@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './NoteItem.module.scss';
 
 
-const NoteItem = ({ note, editing, onToggle, onChange }) => {
+const NoteItem = ({ note, editing, onToggle, onChange, onUpdate }) => {
     
     const handleToggle = () => {
         onToggle({ id: note.id, text: note.text });
@@ -13,6 +13,13 @@ const NoteItem = ({ note, editing, onToggle, onChange }) => {
         onChange({value}, true);
     };
     
+    const handleKeyPress = e => {
+        if (e.key === "Enter") {
+            console.log('UPDATE_NOTE!');
+            onUpdate();
+        }
+    };
+
     return (
         <div 
             // className={styles.note_item}
@@ -26,6 +33,7 @@ const NoteItem = ({ note, editing, onToggle, onChange }) => {
                     value={editing.text}
                     autoFocus
                     onChange={handleChange}
+                    onKeyPress={handleKeyPress}
                 />
                 ) : (
                     <div className={styles.note}>{note.text}</div>

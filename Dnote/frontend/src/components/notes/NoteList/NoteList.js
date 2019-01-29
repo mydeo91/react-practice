@@ -4,7 +4,7 @@ import NoteItem from 'components/notes/NoteItem/NoteItem';
 
 
 // NoteList 객체 정의
-const NoteList = ({ notes, editing, onToggle, onChange }) => {
+const NoteList = ({ notes, editing, onToggle, onChange, onUpdate }) => {
     // noteList 객체 정의
     const noteList = notes.map((note, i) => {
         return <NoteItem 
@@ -13,6 +13,7 @@ const NoteList = ({ notes, editing, onToggle, onChange }) => {
                     editing={editing}
                     onToggle={onToggle}
                     onChange={onChange}
+                    onUpdate={onUpdate}
                 />;
     });
 

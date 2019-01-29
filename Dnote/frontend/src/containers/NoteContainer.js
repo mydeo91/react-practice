@@ -47,12 +47,18 @@ export class NoteContainer extends Component {
       toggleNote({ id, text });
     }
   }
+
+  // UPDATE
+  updateNote = () => {
+    const { updateNote } = this.props;
+    updateNote();
+  };
   // =========== ///Event Handeling ===========
 
   // ======== RENDERING =========
   render() {
     const { noteInput, error, notes, editing } = this.props;
-    const { handleChange, addNote, handleToggle } = this;
+    const { handleChange, addNote, handleToggle, updateNote } = this;
     return (
       <div>
         <NoteWrapper>
@@ -69,6 +75,7 @@ export class NoteContainer extends Component {
             onToggle={handleToggle}
             // NoteList props에 onChange 추가
             onChange={handleChange}
+            onUpdate={updateNote}
           />
         </NoteWrapper>
       </div>
@@ -102,6 +109,10 @@ const mapDispatchToProps = dispatch => {
     // TOGGLE
     toggleNote: ({ id, text }) => {
       dispatch(noteActions.toggleNote({ id, text }));
+    },
+    // UPDATE
+    updateNote: () => {
+      dispatch(noteActions.updateNote());
     }
   };
 };

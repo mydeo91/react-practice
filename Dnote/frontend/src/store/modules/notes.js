@@ -7,8 +7,11 @@ import { map, mergeMap, catchError, withLatestFrom } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 
 // ========== Define Actions ==========
-// redux-store 관련 variable 정의
+// 노트값 변경
 const CHANGE_NOTE_INPUT = "notes/CHANGE_NOTE_INPUT";
+
+// 노트 토글
+const TOGGLE_NOTE = 'notes/TOGGLE_NOTE';
 
 
 // 노트 생성
@@ -17,26 +20,28 @@ const ADD_NOTE_SUCCESS = 'notes/ADD_NOTE_SUCCESS';
 const ADD_NOTE_FAILURE = 'notes/ADD_NOTE_FAILURE';
 
 
-// GET_NOTES 리스트
+// 노트 리스트
 const GET_NOTES = 'notes/GET_NOTES';
 const GET_NOTES_SUCCESS = 'notes/GET_NOTES_SUCCESS';
 const GET_NOTES_FAILURE = 'notes/GET_NOTES_FAILURE';
 
 
-// 노트 수정
-const TOGGLE_NOTE = 'notes/TOGGLE_NOTE';
+// 노트 업데이트
+const UPDATE_NOTE = 'note/UPDATE_NOTE';
+const UPDATE_NOTE_SUCCESS = 'note/UPDATE_NOTE_SUCCESS';
+const UPDATE_NOTE_FAILURE = 'note/UPDATE_NOTE_FAILURE';
 // ========== ///Define Actions ==========
 
 
 
 // ========== Create action ============
-// 노트 입력 값 변경 관련 + 수정 시(isEditing)
+// 노트값 변경 + 토글(isEditing)
 export const changeNoteInput = ({ value }, isEditing) => ({
   type: CHANGE_NOTE_INPUT,
   payload: { value, isEditing }
 });
 
-// 노트값 추가 관련
+// 노트 생성
 export const addNote = () => ({
   type: ADD_NOTE
 });
@@ -55,7 +60,7 @@ export const addNoteFailure = error => ({
   }
 });
 
-// 노트 생성 함수 정의
+// 노트 생성 - EPIC 함수 정의
 const addNoteEpic = (action$, state$) => {
   return action$.pipe(
     ofType(ADD_NOTE),
@@ -79,11 +84,11 @@ const addNoteEpic = (action$, state$) => {
 };
 
 
-// GET action 관련
+// 노트 리스트
 export const getNotes = () => ({
   type: GET_NOTES
 });
-export const getNotesSuccess = ({notes}) => ({
+export const getNotesSuccess = ({ notes }) => ({
   type: GET_NOTES_SUCCESS,
   payload: {
     notes
@@ -96,7 +101,7 @@ export const getNotesFailure = error => ({
   }
 });
 
-// API에 쓰일 EPIC 함수 정의
+// 노트 리스트 - EPIC 함수 정의
 const getNotesEpic = (actions$, states$) => {
   return actions$.pipe(
     ofType(GET_NOTES),
@@ -107,9 +112,9 @@ const getNotesEpic = (actions$, states$) => {
         .pipe(
           map(response => {
             const notes = response.response;
-            return getNotesSuccess({notes});
+            return getNotesSuccess({ notes });
           }),
-          catchError(error => 
+          catchError(error =>
             of({
               type: GET_NOTES_FAILURE,
               payload: error,
@@ -121,7 +126,7 @@ const getNotesEpic = (actions$, states$) => {
   );
 };
 
-// toggleNote 관련
+// 노트 토글
 export const toggleNote = ({ id, text }) => ({
   type: TOGGLE_NOTE,
   payload: {
@@ -129,13 +134,60 @@ export const toggleNote = ({ id, text }) => ({
     text
   }
 });
+
+
+// 노트 업데이트
+export const updateNote = () => ({
+  type: UPDATE_NOTE
+});
+
+export const updateNoteSuccess = ({ note }) => ({
+  type: UPDATE_NOTE_SUCCESS,
+  payload: {
+    note
+  }
+});
+
+export const updateNoteFailure = error => ({
+  type: UPDATE_NOTE_FAILURE,
+  payload: {
+    error
+  }
+});
+
+// 노트 업데이트 - EPIC 함수 정의
+const updateNoteEpic = (action$, state$) => {
+  return action$.pipe(
+    ofType(UPDATE_NOTE),
+    withLatestFrom(state$),
+
+    mergeMap(([action, state]) => {
+      return ajax
+        .patch(`/api/notes/${state.notes.editing.id}/`, {
+          text: state.notes.editing.text
+        })
+        .pipe(
+          map(response => {
+            const note = response.response;
+            return updateNoteSuccess({ note });
+          }),
+          catchError(error =>
+            of({
+              type: UPDATE_NOTE_FAILURE,
+              payload: error,
+              error: true
+            })
+          )
+        );
+    })
+  );
+};
 // ========== ///Create action ============
 
 // ========== Initial State ==========
 const initialState = {
   noteInput: "",
-  notes:[],
-  // 에러 관련 State 등록.
+  notes: [],
   error: {
     triggered: false,
     message: ""
@@ -151,12 +203,12 @@ const initialState = {
 // ========== Define Reducer & Export Reducer ==========
 export const notes = (state = initialState, action) => {
   switch (action.type) {
-    
-    // 노트 입력값 변경
+
+    // 노트값 변경
     case CHANGE_NOTE_INPUT:
       // Test Using localStorage func! Awesome!
-        // localStorage.setItem('noteInput',action.payload.value);
-      if(action.payload.isEditing) {
+      // localStorage.setItem('noteInput',action.payload.value);
+      if (action.payload.isEditing) {
         return {
           ...state,
           editing: {
@@ -166,13 +218,25 @@ export const notes = (state = initialState, action) => {
         }
       }
       return {
-          ...state,
-          noteInput: action.payload.value
+        ...state,
+        noteInput: action.payload.value
       };
 
-    // 노트 생성 성공
+
+    // 노트 토글
+    case TOGGLE_NOTE:
+      return {
+        ...state,
+        editing: {
+          id: parseInt(action.payload.id, 10),
+          text: action.payload.text
+        }
+      };
+
+
+    // 노트 생성
     case ADD_NOTE_SUCCESS:
-      const{ note } = action.payload;
+      const { note } = action.payload;
       return {
         ...state,
         notes: [note].concat(state.notes),  // 기존 노트에 추가
@@ -185,7 +249,6 @@ export const notes = (state = initialState, action) => {
         }
       }
 
-    // 노트 생성 실패
     case ADD_NOTE_FAILURE:
       return {
         ...state,
@@ -195,14 +258,14 @@ export const notes = (state = initialState, action) => {
         }
       };
 
-    // GET_NOTES 성공
+
+    // 노트 리스트
     case GET_NOTES_SUCCESS:
       return {
         ...state,
         notes: action.payload.notes
       };
 
-    // GET_NOTES 실패
     case GET_NOTES_FAILURE:
       return {
         ...state,
@@ -212,16 +275,37 @@ export const notes = (state = initialState, action) => {
         }
       };
 
-    // TOGGLE
-    case TOGGLE_NOTE:
+
+    // 노트 업데이트
+    case UPDATE_NOTE_SUCCESS:
+      const { id, text } = action.payload.note;
+      let notes = state.notes;
+      let index = notes.findIndex((note, i) => {
+        return note.id === id;
+      });
+      notes[parseInt(index, 10)] = {
+        id,
+        text
+      };
       return {
         ...state,
         editing: {
-          id: parseInt(action.payload.id, 10),
-          text: action.payload.text
-        }
-      };  
+          id: null,
+          note: ""
+        },
+        notes
+      };
 
+    case UPDATE_NOTE_FAILURE:
+    return {
+      ...state,
+      error: {
+        triggered: true,
+        message: '[ERROR] 노트 업데이트에 실패했습니다.'
+      }
+    };
+
+    
     // 기본 리듀서 --> 저장 중인 state 반환
     default:
       return state;
@@ -233,7 +317,8 @@ export const notes = (state = initialState, action) => {
 // ========== Export Reducer ==========
 export const notesEpics = {
   addNoteEpic,
-  getNotesEpic
+  getNotesEpic,
+  updateNoteEpic
 };
 // ========== ///Export Reducer ==========
 
