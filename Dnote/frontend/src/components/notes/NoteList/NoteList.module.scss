@@ -1,0 +1,17 @@
+@import "../../../styles/utils";
+
+.note_list {
+  .title {
+    border-bottom: 1px solid $oc-gray-5;
+    padding-bottom: 0.75rem;
+
+    font-size: 1.25rem;
+    font-weight: 500;
+
+    margin-bottom: 1rem;
+  }
+
+  .note_item + .note_item {
+    margin-top: 1rem;
+  }
+}

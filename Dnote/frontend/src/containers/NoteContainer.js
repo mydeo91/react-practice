@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+
+// Importing Components
 import InsertForm from "components/notes/InsertForm";
 import NoteWrapper from "components/notes/NoteWrapper";
+import NoteList from 'components/notes/NoteList/NoteList';
 
+// Importing Reducers
 import * as noteActions from "store/modules/notes";
 
 
@@ -32,8 +36,9 @@ export class NoteContainer extends Component {
     getNotes();
   }
 
+  // ======== RENDERING =========
   render() {
-    const { noteInput, error } = this.props;
+    const { noteInput, error, notes } = this.props;
     const { handleChange, addNote } = this;
     return (
       <div>
@@ -44,11 +49,14 @@ export class NoteContainer extends Component {
             onAdd={addNote}
             error={error}
           />
+          {/* noteList RENDERING */}
+          <NoteList notes={notes} />
         </NoteWrapper>
       </div>
     );
   }
 }
+// ======== ///RENDERING =========
 
 const mapStateToProps = state => ({
   noteInput: state.notes.noteInput,
